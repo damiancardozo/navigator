@@ -1,0 +1,25 @@
+{
+  "name": "navigator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HTTP platform for executing declarative browser navigation workflows.",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @navigator/core && npm run build -w @navigator/cdp && npm run build -w @navigator/agent && npm run build -w @navigator/sdk",
+    "test": "npm run test -w @navigator/core && npm run test -w @navigator/agent && npm run test -w @navigator/sdk",
+    "typecheck": "npm run typecheck -w @navigator/core && npm run typecheck -w @navigator/cdp && npm run typecheck -w @navigator/agent && npm run typecheck -w @navigator/sdk",
+    "dev": "npm run dev -w @navigator/agent"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

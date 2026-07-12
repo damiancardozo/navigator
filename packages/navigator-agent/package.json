@@ -1,0 +1,28 @@
+{
+  "name": "@navigator/agent",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "dev": "tsx src/main.ts",
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "@navigator/cdp": "0.1.0",
+    "@navigator/core": "0.1.0",
+    "fastify": "^5.2.1"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.8"
+  }
+}

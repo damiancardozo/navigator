@@ -1,0 +1,21 @@
+{
+  "steps": [
+    {
+      "action": "goto",
+      "url": "https://example.com"
+    },
+    {
+      "action": "waitForSelector",
+      "selector": "h1"
+    },
+    {
+      "action": "extractText",
+      "selector": "h1",
+      "output": "title"
+    },
+    {
+      "action": "extractLinks",
+      "output": "links"
+    }
+  ]
+}

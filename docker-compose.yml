@@ -1,0 +1,14 @@
+services:
+  navigator:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: "3001"
+      NAVIGATOR_CDP_PORT: "9222"
+      NAVIGATOR_CHROME_PROFILE_DIR: "/app/navigator-profile"
+    volumes:
+      - navigator-profile:/app/navigator-profile
+
+volumes:
+  navigator-profile:
