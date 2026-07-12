@@ -4,6 +4,14 @@ Navigator is a TypeScript platform for running declarative browser navigation wo
 
 The project is intentionally generic. Navigator does not know about any specific website, does not contain scraping business logic, and does not interpret extracted data. It provides the browser execution layer that another application can build on top of.
 
+## Why Navigator
+
+Navigator is useful when an application needs browser workflows to run through a persistent, user-like browser session rather than isolated one-off scripts. It is designed for pages with complex session state, redirects, authentication, or occasional manual checkpoints, while keeping extraction logic outside the browser runtime.
+
+Playwright and similar tools are excellent for testing and direct scripted automation. Navigator is a higher-level workflow service: it accepts declarative jobs over HTTP, queues them, runs them through a managed browser, and returns named outputs that application code can consume.
+
+Navigator does not bypass access controls, solve captchas, hide automation, or circumvent site protections.
+
 ## What It Does
 
 Navigator runs workflows such as:
@@ -16,7 +24,7 @@ Navigator runs workflows such as:
 
 The first browser backend controls Google Chrome through the Chrome DevTools Protocol. Chrome is launched and managed by the agent, and workflows run against a persistent browser profile so cookies, local storage, session storage, history, and cache can persist naturally between runs.
 
-Navigator is not designed to hide automation, modify browser fingerprints, bypass bot protections, solve captchas, or make decisions about extracted content. When automation cannot continue, a job can be marked as `waiting_for_human` with a reason.
+When automation cannot continue, a job can be marked as `waiting_for_human` with a reason.
 
 ## Repository Layout
 
