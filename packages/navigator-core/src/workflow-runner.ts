@@ -1,5 +1,5 @@
 import type { BrowserAdapter } from "./browser-adapter.js";
-import { WorkflowValidationError } from "./errors.js";
+import { HumanInterventionRequiredError, WorkflowExecutionError, WorkflowValidationError } from "./errors.js";
 import type { NavigatorLogger } from "./logger.js";
 import { noopLogger } from "./logger.js";
 import type {
@@ -12,10 +12,12 @@ import type {
   ExtractImagesStep,
   ExtractLinksStep,
   ExtractTextStep,
+  PageOnError,
   Workflow,
   WorkflowResult,
   WorkflowStep
 } from "./workflow-types.js";
+import { PAGE_ON_ERROR_OUTPUT } from "./workflow-types.js";
 
 export interface WorkflowRunnerOptions {
   logger?: NavigatorLogger;
@@ -36,15 +38,34 @@ export class WorkflowRunner {
     this.logger.info("workflow_started", { steps: workflow.steps.length });
     await this.browser.ensureReady();
 
-    for (const [index, step] of workflow.steps.entries()) {
-      const stepStartedAt = Date.now();
-      this.logger.info("workflow_step_started", { index, action: step.action });
-      await this.runStep(step, result);
-      this.logger.info("workflow_step_completed", {
-        index,
-        action: step.action,
-        durationMs: Date.now() - stepStartedAt
+    try {
+      for (const [index, step] of workflow.steps.entries()) {
+        const stepStartedAt = Date.now();
+        this.logger.info("workflow_step_started", { index, action: step.action });
+        await this.runStep(step, result);
+        this.logger.info("workflow_step_completed", {
+          index,
+          action: step.action,
+          durationMs: Date.now() - stepStartedAt
+        });
+      }
+    } catch (error) {
+      result[PAGE_ON_ERROR_OUTPUT] = await this.capturePageOnError();
+      this.logger.warn("workflow_failed_page_captured", {
+        action: "capturePageOnError",
+        hasHtml: Boolean((result[PAGE_ON_ERROR_OUTPUT] as PageOnError | undefined)?.html)
       });
+
+      if (error instanceof HumanInterventionRequiredError) {
+        error.result = result;
+        throw error;
+      }
+
+      throw new WorkflowExecutionError(
+        error instanceof Error ? error.message : String(error),
+        result,
+        error
+      );
     }
 
     this.logger.info("workflow_completed", { durationMs: Date.now() - startedAt });
@@ -117,6 +138,47 @@ export class WorkflowRunner {
         throw new WorkflowValidationError(`Unsupported action: ${unknownStep.action}`);
       }
     }
+  }
+
+  private async capturePageOnError(): Promise<PageOnError> {
+    try {
+      const snapshot = await this.browser.evaluate<PageOnError>(
+        `(() => ({
+          url: location.href,
+          title: document.title || "",
+          html: document.documentElement ? document.documentElement.outerHTML : "",
+          text: document.body
+            ? document.body.innerText
+            : (document.documentElement ? (document.documentElement.textContent || "") : "")
+        }))()`,
+        { timeoutMs: 10_000 }
+      );
+
+      if (snapshot && typeof snapshot === "object") {
+        return {
+          url: typeof snapshot.url === "string" ? snapshot.url : "",
+          title: typeof snapshot.title === "string" ? snapshot.title : "",
+          html: typeof snapshot.html === "string" ? snapshot.html : "",
+          text: typeof snapshot.text === "string" ? snapshot.text : ""
+        };
+      }
+    } catch (error) {
+      return {
+        url: "",
+        title: "",
+        html: "",
+        text: "",
+        captureError: error instanceof Error ? error.message : String(error)
+      };
+    }
+
+    return {
+      url: "",
+      title: "",
+      html: "",
+      text: "",
+      captureError: "Page snapshot was empty."
+    };
   }
 }
 
