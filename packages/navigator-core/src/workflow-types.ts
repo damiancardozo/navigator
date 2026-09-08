@@ -4,6 +4,16 @@ export interface Workflow {
 
 export type WorkflowResult = Record<string, unknown>;
 
+export const PAGE_ON_ERROR_OUTPUT = "pageOnError";
+
+export interface PageOnError {
+  url: string;
+  title: string;
+  html: string;
+  text: string;
+  captureError?: string;
+}
+
 export type WorkflowStep =
   | GotoStep
   | WaitStep

@@ -24,7 +24,7 @@ Navigator runs workflows such as:
 
 The first browser backend controls Google Chrome through the Chrome DevTools Protocol. Chrome is launched and managed by the agent, and workflows run against a persistent browser profile so cookies, local storage, session storage, history, and cache can persist naturally between runs.
 
-When automation cannot continue, a job can be marked as `waiting_for_human` with a reason.
+When automation cannot continue, a job can be marked as `waiting_for_human` with a reason. Failed and `waiting_for_human` jobs also include a `pageOnError` snapshot in `result` (`url`, `title`, `html`, `text`) taken from the current tab, so clients can save the page that blocked the workflow.
 
 ## Repository Layout
 
@@ -68,7 +68,7 @@ The API immediately returns a queued job:
 }
 ```
 
-Fetch the job by ID to inspect its status, result, or error.
+Fetch the job by ID to inspect its status, result, or error. If the job ends as `failed` or `waiting_for_human`, `result.pageOnError` contains the live page HTML/text at that moment.
 
 ## Workflow Actions
 

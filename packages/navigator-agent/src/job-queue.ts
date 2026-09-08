@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import {
   HumanInterventionRequiredError,
+  WorkflowExecutionError,
   type BrowserAdapter,
   type NavigatorLogger,
   type Workflow,
@@ -127,6 +128,7 @@ export class JobQueue {
         Object.assign(job, {
           status: "waiting_for_human",
           humanReason: error.reason,
+          result: error.result,
           completedAt: new Date(completedAt).toISOString(),
           updatedAt: new Date(completedAt).toISOString(),
           durationMs: completedAt - startedAt
@@ -139,6 +141,7 @@ export class JobQueue {
       Object.assign(job, {
         status: "failed",
         error: message,
+        result: error instanceof WorkflowExecutionError ? error.result : undefined,
         completedAt: new Date(completedAt).toISOString(),
         updatedAt: new Date(completedAt).toISOString(),
         durationMs: completedAt - startedAt

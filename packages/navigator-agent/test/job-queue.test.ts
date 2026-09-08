@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BrowserAdapter, ImageExtraction, LinkExtraction } from "@navigator/core";
+import { HumanInterventionRequiredError } from "@navigator/core";
 import { JobQueue } from "../src/index.js";
 
 class SlowFakeBrowserAdapter implements BrowserAdapter {
@@ -88,6 +89,44 @@ describe("JobQueue", () => {
     expect(queue.get(first.jobId)?.status).toBe("completed");
     expect(queue.get(second.jobId)?.status).toBe("completed");
     expect(browser.order).toEqual(["first", "second"]);
+  });
+
+  it("stores pageOnError when a selector wait needs a human", async () => {
+    class BlockedBrowserAdapter extends SlowFakeBrowserAdapter {
+      async waitForSelector(): Promise<void> {
+        throw new HumanInterventionRequiredError(
+          'Selector "#form" did not appear. Human intervention may be required.'
+        );
+      }
+
+      async evaluate<T = unknown>(): Promise<T> {
+        return {
+          url: "https://example.com/blocked",
+          title: "Too Many Requests",
+          html: "<html><body>Too Many Requests</body></html>",
+          text: "Too Many Requests"
+        } as T;
+      }
+    }
+
+    const queue = new JobQueue({ browser: new BlockedBrowserAdapter() });
+    const job = queue.enqueue({
+      steps: [
+        { action: "goto", url: "https://example.com" },
+        { action: "waitForSelector", selector: "#form" }
+      ]
+    });
+
+    await waitFor(() => queue.get(job.jobId)?.status === "waiting_for_human");
+
+    expect(queue.get(job.jobId)?.result).toEqual({
+      pageOnError: {
+        url: "https://example.com/blocked",
+        title: "Too Many Requests",
+        html: "<html><body>Too Many Requests</body></html>",
+        text: "Too Many Requests"
+      }
+    });
   });
 });
 
